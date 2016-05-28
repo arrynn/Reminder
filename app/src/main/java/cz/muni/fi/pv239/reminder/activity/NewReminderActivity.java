@@ -23,25 +23,28 @@ public class NewReminderActivity extends AppCompatActivity {
 
     public static String REMINDER_ID = "reminder_id";
 
-    private ActivityNewReminderBinding mBidning;
+    private ActivityNewReminderBinding mBinding;
     private Reminder mReminder;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        mBidning = DataBindingUtil.setContentView(this, R.layout.activity_new_reminder);
+        mBinding = DataBindingUtil.setContentView(this, R.layout.activity_new_reminder);
         Long reminderId = getIntent().getLongExtra(REMINDER_ID, -1);
         mReminder = Reminder.getReminderById(reminderId);
-        mBidning.setReminder(mReminder);
+        mBinding.setReminder(mReminder);
 
         WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
         List<String> wifiList = new ArrayList<>();
-        for (WifiConfiguration wifiConfiguration : wifiManager.getConfiguredNetworks()) {
-            wifiList.add(wifiConfiguration.SSID);
-        }
 
-        ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, wifiList);
-        mBidning.spinnerSelectWifi.setAdapter(adapter);
+        if (wifiManager != null) {
+            for (WifiConfiguration wifiConfiguration : wifiManager.getConfiguredNetworks()) {
+                wifiList.add(wifiConfiguration.SSID);
+            }
+
+            ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, wifiList);
+            mBinding.spinnerSelectWifi.setAdapter(adapter);
+        }
     }
 
     @Override
@@ -66,9 +69,14 @@ public class NewReminderActivity extends AppCompatActivity {
         if (mReminder == null) {
             mReminder = new Reminder();
         }
-        mReminder.title = mBidning.reminderTitle.getText().toString();
-        mReminder.description = mBidning.reminderDescription.getText().toString();
-        mReminder.type = mBidning.radioTypeWifi.isChecked() ? ReminderType.TYPE_WIFI : ReminderType.TYPE_GPS;
+        mReminder.title = mBinding.reminderTitle.getText().toString();
+        mReminder.description = mBinding.reminderDescription.getText().toString();
+        if (mBinding.radioTypeLocation.isChecked()) {
+            mReminder.type = ReminderType.TYPE_LOCATION;
+        } else if (mBinding.radioTypeWifi.isChecked()) {
+            mReminder.type = ReminderType.TYPE_WIFI;
+            mReminder.identifier = mBinding.spinnerSelectWifi.getSelectedItem().toString();
+        }
         mReminder.save();
         finish();
     }

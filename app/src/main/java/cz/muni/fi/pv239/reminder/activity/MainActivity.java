@@ -17,11 +17,10 @@ import android.view.View;
 
 import com.activeandroid.ActiveAndroid;
 
-import java.util.ArrayList;
 import java.util.List;
 
 import cz.muni.fi.pv239.reminder.R;
-import cz.muni.fi.pv239.reminder.ReminderAdapter;
+import cz.muni.fi.pv239.reminder.adapter.ReminderAdapter;
 import cz.muni.fi.pv239.reminder.ReminderType;
 import cz.muni.fi.pv239.reminder.model.Label;
 import cz.muni.fi.pv239.reminder.model.Reminder;
@@ -77,9 +76,6 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
-
-        Label r = new Label();
-        r.save();
     }
 
     @Override
@@ -98,7 +94,7 @@ public class MainActivity extends AppCompatActivity
                 r.title = "Title " + i;
                 r.description = "Description " + i;
                 if (i < 5) {
-                    r.type = ReminderType.TYPE_GPS;
+                    r.type = ReminderType.TYPE_LOCATION;
                 } else {
                     r.type = ReminderType.TYPE_WIFI;
                 }

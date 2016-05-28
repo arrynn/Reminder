@@ -60,10 +60,10 @@
                 android:text="@string/button_wifi" />
 
             <RadioButton
-                android:id="@+id/radio_type_gps"
+                android:id="@+id/radio_type_location"
                 android:layout_width="wrap_content"
                 android:layout_height="wrap_content"
-                android:checked="@{reminder.type == ReminderType.TYPE_GPS}"
+                android:checked="@{reminder.type == ReminderType.TYPE_LOCATION}"
                 android:text="@string/button_location" />
 
         </RadioGroup>
@@ -80,7 +80,7 @@
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:text="@string/button_select_location"
-            android:visibility="@{reminder.type == ReminderType.TYPE_GPS ? View.VISIBLE : View.GONE}"
+            android:visibility="@{reminder.type == ReminderType.TYPE_LOCATION ? View.VISIBLE : View.GONE}"
             />
 
     </LinearLayout>

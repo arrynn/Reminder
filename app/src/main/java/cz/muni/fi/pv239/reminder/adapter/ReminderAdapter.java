@@ -1,4 +1,4 @@
-package cz.muni.fi.pv239.reminder;
+package cz.muni.fi.pv239.reminder.adapter;
 
 import android.databinding.DataBindingUtil;
 import android.databinding.ViewDataBinding;
@@ -9,7 +9,7 @@ import android.view.ViewGroup;
 
 import java.util.List;
 
-import cz.muni.fi.pv239.reminder.activity.MainActivity;
+import cz.muni.fi.pv239.reminder.R;
 import cz.muni.fi.pv239.reminder.model.Reminder;
 
 

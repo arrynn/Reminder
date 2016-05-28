@@ -6,5 +6,5 @@ package cz.muni.fi.pv239.reminder;
 public class ReminderType {
 
     public static int TYPE_WIFI = 0;
-    public static int TYPE_GPS = 1;
+    public static int TYPE_LOCATION = 1;
 }
