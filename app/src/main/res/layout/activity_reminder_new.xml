@@ -10,6 +10,7 @@
             type="cz.muni.fi.pv239.reminder.model.Reminder" />
 
         <import type="cz.muni.fi.pv239.reminder.ReminderType" />
+
         <import type="android.view.View" />
 
     </data>
@@ -24,27 +25,42 @@
         android:paddingTop="@dimen/activity_vertical_margin"
         tools:context=".activity.ReminderNewActivity">
 
-        <EditText
-            android:id="@+id/reminder_title"
+        <android.support.design.widget.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@{reminder.title}"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            tools:text="Title" />
+            android:hint="@string/hint_title">
 
-        <EditText
-            android:id="@+id/reminder_description"
+            <EditText
+                android:id="@+id/reminder_title"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@{reminder.title}"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                tools:text="Title" />
+
+        </android.support.design.widget.TextInputLayout>
+
+        <android.support.design.widget.TextInputLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@{reminder.description}"
-            tools:text="Descritpion" />
+            android:hint="@string/hint_description">
+
+            <EditText
+                android:id="@+id/reminder_description"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="@{reminder.description}"
+                tools:text="Descritpion" />
+
+        </android.support.design.widget.TextInputLayout>
 
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginBottom="8dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginBottom="24dp"
+            android:layout_marginTop="24dp"
+            android:alpha="0.1"
             android:background="@color/cardview_dark_background" />
 
         <RadioGroup
@@ -59,6 +75,7 @@
                 android:checked="@{reminder.type == ReminderType.TYPE_WIFI}"
                 android:text="@string/button_wifi" />
 
+
             <RadioButton
                 android:id="@+id/radio_type_location"
                 android:layout_width="wrap_content"
@@ -66,22 +83,39 @@
                 android:checked="@{reminder.type == ReminderType.TYPE_LOCATION}"
                 android:text="@string/button_location" />
 
+
         </RadioGroup>
 
         <Spinner
             android:id="@+id/spinner_select_wifi"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:visibility="@{reminder.type == ReminderType.TYPE_WIFI ? View.VISIBLE : View.GONE}"
-            />
+            android:visibility="@{reminder.type == ReminderType.TYPE_WIFI ? View.VISIBLE : View.GONE}" />
 
-        <Button
-            android:id="@+id/button_select_location"
-            android:layout_width="wrap_content"
+        <LinearLayout
+            android:id="@+id/view_location"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="@string/button_select_location"
-            android:visibility="@{reminder.type == ReminderType.TYPE_LOCATION ? View.VISIBLE : View.GONE}"
-            />
+            android:visibility="@{reminder.type == ReminderType.TYPE_LOCATION ? View.VISIBLE : View.GONE}">
+
+
+            <Button
+                android:id="@+id/button_select_location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@string/button_select_location" />
+
+
+            <TextView
+                android:id="@+id/text_view_location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_marginStart="8dp"
+                android:text="@{reminder.identifier}" />
+
+
+        </LinearLayout>
+
 
     </LinearLayout>
 

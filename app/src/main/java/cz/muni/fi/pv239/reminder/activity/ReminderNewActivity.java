@@ -8,6 +8,7 @@ import android.databinding.DataBindingUtil;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.support.annotation.NonNull;
+import android.support.design.widget.TextInputLayout;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
@@ -117,12 +118,19 @@ public class ReminderNewActivity extends AppCompatActivity implements CompoundBu
     }
 
     private void saveReminder() {
+        if (mBinding.reminderTitle.getText().toString().isEmpty()) {
+            ((TextInputLayout) mBinding.reminderTitle.getParent()).setErrorEnabled(true);
+            ((TextInputLayout) mBinding.reminderTitle.getParent()).setError("This field is required.");
+            return;
+        }
         mReminder.title = mBinding.reminderTitle.getText().toString();
         mReminder.description = mBinding.reminderDescription.getText().toString();
         if (mBinding.radioTypeLocation.isChecked()) {
             mReminder.type = ReminderType.TYPE_LOCATION;
-            mReminder.location = mSelectedPlace.getLatLng();
-            mReminder.identifier = mSelectedPlace.getName() != null ? mSelectedPlace.getName().toString() : mSelectedPlace.getAddress().toString();
+            if (mSelectedPlace != null) {
+                mReminder.location = mSelectedPlace.getLatLng();
+                mReminder.identifier = mSelectedPlace.getName() != null ? mSelectedPlace.getName().toString() : mSelectedPlace.getAddress().toString();
+            }
         } else if (mBinding.radioTypeWifi.isChecked()) {
             mReminder.type = ReminderType.TYPE_WIFI;
             mReminder.identifier = mBinding.spinnerSelectWifi.getSelectedItem().toString();
@@ -136,13 +144,13 @@ public class ReminderNewActivity extends AppCompatActivity implements CompoundBu
         switch (buttonView.getId()) {
             case R.id.radio_type_location:
                 if (isChecked) {
-                    mBinding.buttonSelectLocation.setVisibility(View.VISIBLE);
+                    mBinding.viewLocation.setVisibility(View.VISIBLE);
                     mBinding.spinnerSelectWifi.setVisibility(View.GONE);
                 }
                 break;
             case R.id.radio_type_wifi:
                 if (isChecked && mReminder != null) {
-                    mBinding.buttonSelectLocation.setVisibility(View.GONE);
+                    mBinding.viewLocation.setVisibility(View.GONE);
                     mBinding.spinnerSelectWifi.setVisibility(View.VISIBLE);
                 }
                 break;
@@ -179,6 +187,7 @@ public class ReminderNewActivity extends AppCompatActivity implements CompoundBu
         if (requestCode == PLACE_PICKER_REQUEST) {
             if (resultCode == RESULT_OK) {
                 mSelectedPlace = PlacePicker.getPlace(this, data);
+                mBinding.textViewLocation.setText(mSelectedPlace.getName() != null ? mSelectedPlace.getName().toString() : mSelectedPlace.getAddress().toString());
             }
         }
     }

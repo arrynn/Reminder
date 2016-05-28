@@ -44,36 +44,22 @@
         <View
             android:layout_width="match_parent"
             android:layout_height="1dp"
-            android:layout_marginBottom="8dp"
-            android:layout_marginTop="8dp"
+            android:layout_marginBottom="24dp"
+            android:layout_marginTop="24dp"
+            android:alpha="0.1"
             android:background="@color/cardview_dark_background" />
-
-        <RadioGroup
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal">
-
-            <RadioButton
-                android:id="@+id/radio_type_wifi"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checked="@{reminder.type == ReminderType.TYPE_WIFI}"
-                android:enabled="false"
-                android:text="@string/button_wifi" />
-
-            <RadioButton
-                android:id="@+id/radio_type_location"
-                android:layout_width="wrap_content"
-                android:layout_height="wrap_content"
-                android:checked="@{reminder.type == ReminderType.TYPE_LOCATION}"
-                android:enabled="false"
-                android:text="@string/button_location" />
-
-        </RadioGroup>
 
         <TextView
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
+            android:layout_marginTop="8dp"
+            android:text="@{reminder.type == ReminderType.TYPE_WIFI ? @string/format_wifi(reminder.identifier) : @string/format_location(reminder.identifier) }"
+            tools:text="Type" />
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_marginTop="16dp"
             android:text="@{@string/format_reminded_on(reminder.remindedOn)}"
             android:visibility="@{reminder.displayed ? View.VISIBLE : View.GONE}"
             tools:text="Reminded on" />
