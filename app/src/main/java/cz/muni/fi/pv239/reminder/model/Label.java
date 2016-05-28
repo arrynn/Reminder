@@ -7,7 +7,7 @@ import com.activeandroid.annotation.Table;
 /**
  * Created by Marek on 28-May-16.
  */
-@Table(name = "label")
+@Table(name = "Label")
 public class Label extends Model {
 
     @Column(name = "title")
@@ -16,4 +16,23 @@ public class Label extends Model {
     @Column(name = "color")
     public String color;
 
+    public Label() {
+        super();
+    }
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
+
+    public String getColor() {
+        return color;
+    }
+
+    public void setColor(String color) {
+        this.color = color;
+    }
 }

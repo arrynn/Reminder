@@ -1,18 +1,53 @@
 <?xml version="1.0" encoding="utf-8"?>
 
-<layout xmlns:android="http://schemas.android.com/apk/res/android">
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_margin="4dp">
 
     <data>
 
         <variable
-            name="user"
+            name="reminder"
             type="cz.muni.fi.pv239.reminder.model.Reminder" />
+
+        <import type="cz.muni.fi.pv239.reminder.ReminderType" />
+
     </data>
 
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+    <android.support.v7.widget.CardView xmlns:card_view="http://schemas.android.com/apk/res-auto"
+        android:id="@+id/card_view"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        card_view:cardCornerRadius="4dp">
 
-    </LinearLayout>
+        <LinearLayout
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:layout_margin="8dp"
+            android:orientation="vertical">
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@{reminder.title}"
+                android:textSize="20sp"
+                android:textStyle="bold"
+                tools:text="Title" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@{reminder.description}"
+                tools:text="Descritpion" />
+
+            <TextView
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:text="@{reminder.type == ReminderType.TYPE_WIFI ? @string/format_wifi(reminder.identifier) : @string/format_location(reminder.identifier) }"
+                tools:text="Type" />
+
+        </LinearLayout>
+
+    </android.support.v7.widget.CardView>
 
 </layout>

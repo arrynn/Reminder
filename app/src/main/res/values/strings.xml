@@ -5,4 +5,13 @@
     <string name="navigation_drawer_close">Close navigation drawer</string>
 
     <string name="action_settings">Settings</string>
+    <string name="action_save">Save</string>
+
+    <string name="button_select_location">Select location</string>
+    <string name="button_wifi">WIFI</string>
+    <string name="button_location">Location</string>
+
+
+    <string name="format_location">Location: %s</string>
+    <string name="format_wifi">WiFI: %s</string>
 </resources>

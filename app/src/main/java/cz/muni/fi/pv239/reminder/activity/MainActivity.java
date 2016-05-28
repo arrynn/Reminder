@@ -1,9 +1,10 @@
 package cz.muni.fi.pv239.reminder.activity;
 
+import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
-import android.view.View;
+import android.support.v7.widget.LinearLayoutManager;
+import android.support.v7.widget.RecyclerView;
 import android.support.design.widget.NavigationView;
 import android.support.v4.view.GravityCompat;
 import android.support.v4.widget.DrawerLayout;
@@ -12,11 +13,36 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
+
+import com.activeandroid.ActiveAndroid;
+
+import java.util.ArrayList;
+import java.util.List;
 
 import cz.muni.fi.pv239.reminder.R;
+import cz.muni.fi.pv239.reminder.ReminderAdapter;
+import cz.muni.fi.pv239.reminder.ReminderType;
+import cz.muni.fi.pv239.reminder.model.Label;
+import cz.muni.fi.pv239.reminder.model.Reminder;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener {
+        implements NavigationView.OnNavigationItemSelectedListener,
+        ReminderAdapter.OnReminderClickedListener,
+        View.OnClickListener {
+
+    private RecyclerView mRecyclerView;
+    private ReminderAdapter mAdapter;
+    private FloatingActionButton mFab;
+
+    private List<Reminder> mReminders;
+
+    @Override
+    public void onReminderClicked(Reminder reminder) {
+        Intent intent = new Intent(MainActivity.this, NewReminderActivity.class);
+        intent.putExtra(NewReminderActivity.REMINDER_ID, reminder.getId());
+        startActivity(intent);
+    }
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -25,7 +51,23 @@ public class MainActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        mFab = (FloatingActionButton) findViewById(R.id.fab);
+        mFab.setOnClickListener(this);
+        mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
+
+        // in content do not change the layout size of the RecyclerView
+        mRecyclerView.setHasFixedSize(true);
+
+        // use a linear layout manager
+        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(this);
+        mRecyclerView.setLayoutManager(mLayoutManager);
+
+//        createDummyReminders();
+
+        // specify an adapter (see also next example)
+        mReminders = Reminder.getAllReminders();
+        mAdapter = new ReminderAdapter(mReminders, this);
+        mRecyclerView.setAdapter(mAdapter);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -35,6 +77,37 @@ public class MainActivity extends AppCompatActivity
 
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
+
+        Label r = new Label();
+        r.save();
+    }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        mReminders.clear();
+        mReminders.addAll(Reminder.getAllReminders());
+        mAdapter.notifyDataSetChanged();
+    }
+
+    private void createDummyReminders() {
+        try {
+            ActiveAndroid.beginTransaction();
+            for (int i = 0; i < 10; i++) {
+                Reminder r = new Reminder();
+                r.title = "Title " + i;
+                r.description = "Description " + i;
+                if (i < 5) {
+                    r.type = ReminderType.TYPE_GPS;
+                } else {
+                    r.type = ReminderType.TYPE_WIFI;
+                }
+                r.save();
+            }
+            ActiveAndroid.setTransactionSuccessful();
+        } finally {
+            ActiveAndroid.endTransaction();
+        }
     }
 
     @Override
@@ -92,5 +165,15 @@ public class MainActivity extends AppCompatActivity
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         drawer.closeDrawer(GravityCompat.START);
         return true;
+    }
+
+    @Override
+    public void onClick(View v) {
+        switch (v.getId()) {
+            case R.id.fab:
+                Intent intent = new Intent(MainActivity.this, NewReminderActivity.class);
+                startActivity(intent);
+                break;
+        }
     }
 }
