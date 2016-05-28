@@ -3,7 +3,9 @@
     package="cz.muni.fi.pv239.reminder">
 
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE"/>
+    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
+    <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
+    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
 
     <application
         android:name=".App"
@@ -12,12 +14,23 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/AppTheme">
+
+        <meta-data
+            android:name="com.google.android.geo.API_KEY"
+            android:value="AIzaSyDQFC4XCHcpddgodJfjXqsACF-Ce-KCOVY" />
+
+        <meta-data
+            android:name="AA_SERIALIZERS"
+            android:value="cz.muni.fi.pv239.reminder.utils.LatLngSerializer" />
+
         <meta-data
             android:name="AA_DB_NAME"
             android:value="Reminder.db" />
+
         <meta-data
             android:name="AA_DB_VERSION"
             android:value="1" />
+
         <meta-data
             android:name="AA_MODELS"
             android:value="cz.muni.fi.pv239.reminder.model.Reminder, cz.muni.fi.pv239.reminder.model.Label" />
@@ -32,15 +45,28 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
-        <activity android:name=".activity.NewReminderActivity"/>
+        <activity android:name=".activity.ReminderNewActivity" />
+        <activity android:name=".activity.ReminderDetailActivity" />
 
         <receiver android:name=".service.NetworkChangeReceiver">
 
             <intent-filter>
-                <action android:name="android.net.conn.CONNECTIVITY_CHANGE"/>
+                <action android:name="android.net.conn.CONNECTIVITY_CHANGE" />
             </intent-filter>
 
         </receiver>
+
+        <receiver android:name=".service.LocationChangedReceiver">
+
+            <intent-filter>
+                <action android:name="LOCATION_CHANGED_ACTION" />
+            </intent-filter>
+
+        </receiver>
+
+        <service
+            android:name=".service.LocationService"
+            android:exported="false" />
 
     </application>
 

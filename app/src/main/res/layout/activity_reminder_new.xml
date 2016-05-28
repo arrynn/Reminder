@@ -22,7 +22,7 @@
         android:paddingLeft="@dimen/activity_horizontal_margin"
         android:paddingRight="@dimen/activity_horizontal_margin"
         android:paddingTop="@dimen/activity_vertical_margin"
-        tools:context="cz.muni.fi.pv239.reminder.activity.NewReminderActivity">
+        tools:context=".activity.ReminderNewActivity">
 
         <EditText
             android:id="@+id/reminder_title"

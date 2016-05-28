@@ -1,0 +1,83 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<layout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
+
+    <data>
+
+        <variable
+            name="reminder"
+            type="cz.muni.fi.pv239.reminder.model.Reminder" />
+
+        <import type="cz.muni.fi.pv239.reminder.ReminderType" />
+
+        <import type="android.view.View" />
+
+    </data>
+
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:orientation="vertical"
+        android:paddingBottom="@dimen/activity_vertical_margin"
+        android:paddingLeft="@dimen/activity_horizontal_margin"
+        android:paddingRight="@dimen/activity_horizontal_margin"
+        android:paddingTop="@dimen/activity_vertical_margin"
+        tools:context=".activity.ReminderNewActivity">
+
+        <TextView
+            android:id="@+id/reminder_title"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@{reminder.title}"
+            android:textSize="20sp"
+            android:textStyle="bold"
+            tools:text="Title" />
+
+        <TextView
+            android:id="@+id/reminder_description"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@{reminder.description}"
+            tools:text="Descritpion" />
+
+        <View
+            android:layout_width="match_parent"
+            android:layout_height="1dp"
+            android:layout_marginBottom="8dp"
+            android:layout_marginTop="8dp"
+            android:background="@color/cardview_dark_background" />
+
+        <RadioGroup
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal">
+
+            <RadioButton
+                android:id="@+id/radio_type_wifi"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="@{reminder.type == ReminderType.TYPE_WIFI}"
+                android:enabled="false"
+                android:text="@string/button_wifi" />
+
+            <RadioButton
+                android:id="@+id/radio_type_location"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:checked="@{reminder.type == ReminderType.TYPE_LOCATION}"
+                android:enabled="false"
+                android:text="@string/button_location" />
+
+        </RadioGroup>
+
+        <TextView
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:text="@{@string/format_reminded_on(reminder.remindedOn)}"
+            android:visibility="@{reminder.displayed ? View.VISIBLE : View.GONE}"
+            tools:text="Reminded on" />
+
+    </LinearLayout>
+
+</layout>

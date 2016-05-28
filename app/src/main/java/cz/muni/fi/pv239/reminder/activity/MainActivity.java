@@ -22,7 +22,6 @@ import java.util.List;
 import cz.muni.fi.pv239.reminder.R;
 import cz.muni.fi.pv239.reminder.adapter.ReminderAdapter;
 import cz.muni.fi.pv239.reminder.ReminderType;
-import cz.muni.fi.pv239.reminder.model.Label;
 import cz.muni.fi.pv239.reminder.model.Reminder;
 
 public class MainActivity extends AppCompatActivity
@@ -38,8 +37,8 @@ public class MainActivity extends AppCompatActivity
 
     @Override
     public void onReminderClicked(Reminder reminder) {
-        Intent intent = new Intent(MainActivity.this, NewReminderActivity.class);
-        intent.putExtra(NewReminderActivity.REMINDER_ID, reminder.getId());
+        Intent intent = new Intent(MainActivity.this, ReminderDetailActivity.class);
+        intent.putExtra(ReminderNewActivity.REMINDER_ID, reminder.getId());
         startActivity(intent);
     }
 
@@ -167,7 +166,7 @@ public class MainActivity extends AppCompatActivity
     public void onClick(View v) {
         switch (v.getId()) {
             case R.id.fab:
-                Intent intent = new Intent(MainActivity.this, NewReminderActivity.class);
+                Intent intent = new Intent(MainActivity.this, ReminderNewActivity.class);
                 startActivity(intent);
                 break;
         }
