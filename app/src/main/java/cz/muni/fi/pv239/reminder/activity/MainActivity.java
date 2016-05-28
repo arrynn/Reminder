@@ -3,6 +3,8 @@ package cz.muni.fi.pv239.reminder.activity;
 import android.content.Intent;
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
+import android.support.v4.app.Fragment;
+import android.support.v4.app.FragmentTransaction;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
 import android.support.design.widget.NavigationView;
@@ -22,25 +24,13 @@ import java.util.List;
 import cz.muni.fi.pv239.reminder.R;
 import cz.muni.fi.pv239.reminder.adapter.ReminderAdapter;
 import cz.muni.fi.pv239.reminder.ReminderType;
+import cz.muni.fi.pv239.reminder.fragment.AboutFragment;
+import cz.muni.fi.pv239.reminder.fragment.LabelsFragment;
+import cz.muni.fi.pv239.reminder.fragment.RemindersFragment;
 import cz.muni.fi.pv239.reminder.model.Reminder;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener,
-        ReminderAdapter.OnReminderClickedListener,
-        View.OnClickListener {
-
-    private RecyclerView mRecyclerView;
-    private ReminderAdapter mAdapter;
-    private FloatingActionButton mFab;
-
-    private List<Reminder> mReminders;
-
-    @Override
-    public void onReminderClicked(Reminder reminder) {
-        Intent intent = new Intent(MainActivity.this, ReminderDetailActivity.class);
-        intent.putExtra(ReminderNewActivity.REMINDER_ID, reminder.getId());
-        startActivity(intent);
-    }
+        implements NavigationView.OnNavigationItemSelectedListener {
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -48,24 +38,6 @@ public class MainActivity extends AppCompatActivity
         setContentView(R.layout.activity_main);
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
-
-        mFab = (FloatingActionButton) findViewById(R.id.fab);
-        mFab.setOnClickListener(this);
-        mRecyclerView = (RecyclerView) findViewById(R.id.recycler_view);
-
-        // in content do not change the layout size of the RecyclerView
-        mRecyclerView.setHasFixedSize(true);
-
-        // use a linear layout manager
-        RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(this);
-        mRecyclerView.setLayoutManager(mLayoutManager);
-
-//        createDummyReminders();
-
-        // specify an adapter (see also next example)
-        mReminders = Reminder.getAllReminders();
-        mAdapter = new ReminderAdapter(mReminders, this);
-        mRecyclerView.setAdapter(mAdapter);
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
@@ -80,29 +52,6 @@ public class MainActivity extends AppCompatActivity
     @Override
     protected void onResume() {
         super.onResume();
-        mReminders.clear();
-        mReminders.addAll(Reminder.getAllReminders());
-        mAdapter.notifyDataSetChanged();
-    }
-
-    private void createDummyReminders() {
-        try {
-            ActiveAndroid.beginTransaction();
-            for (int i = 0; i < 10; i++) {
-                Reminder r = new Reminder();
-                r.title = "Title " + i;
-                r.description = "Description " + i;
-                if (i < 5) {
-                    r.type = ReminderType.TYPE_LOCATION;
-                } else {
-                    r.type = ReminderType.TYPE_WIFI;
-                }
-                r.save();
-            }
-            ActiveAndroid.setTransactionSuccessful();
-        } finally {
-            ActiveAndroid.endTransaction();
-        }
     }
 
     @Override
@@ -143,18 +92,12 @@ public class MainActivity extends AppCompatActivity
         // Handle navigation view item clicks here.
         int id = item.getItemId();
 
-        if (id == R.id.nav_camera) {
-            // Handle the camera action
-        } else if (id == R.id.nav_gallery) {
-
-        } else if (id == R.id.nav_slideshow) {
-
-        } else if (id == R.id.nav_manage) {
-
-        } else if (id == R.id.nav_share) {
-
-        } else if (id == R.id.nav_send) {
-
+        if (id == R.id.nav_reminders) {
+            setFragment(RemindersFragment.newInstance());
+        } else if (id == R.id.nav_labels) {
+            setFragment(LabelsFragment.newInstance());
+        } else if (id == R.id.nav_about) {
+            setFragment(AboutFragment.newInstance());
         }
 
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -162,13 +105,12 @@ public class MainActivity extends AppCompatActivity
         return true;
     }
 
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.fab:
-                Intent intent = new Intent(MainActivity.this, ReminderNewActivity.class);
-                startActivity(intent);
-                break;
-        }
+    private void setFragment(Fragment fragment) {
+        FragmentTransaction transaction = getSupportFragmentManager().beginTransaction();
+
+        transaction.replace(R.id.fragment_container, fragment);
+        transaction.addToBackStack(null);
+        transaction.commit();
     }
+
 }

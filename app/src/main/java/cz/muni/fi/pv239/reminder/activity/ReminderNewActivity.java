@@ -1,11 +1,14 @@
 package cz.muni.fi.pv239.reminder.activity;
 
+import android.Manifest;
 import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
 import android.databinding.DataBindingUtil;
 import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.support.annotation.NonNull;
+import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.Menu;
@@ -14,7 +17,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
 import android.widget.CompoundButton;
-import android.widget.Toast;
 
 import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
@@ -31,12 +33,15 @@ import cz.muni.fi.pv239.reminder.R;
 import cz.muni.fi.pv239.reminder.ReminderType;
 import cz.muni.fi.pv239.reminder.databinding.ActivityReminderNewBinding;
 import cz.muni.fi.pv239.reminder.model.Reminder;
+import cz.muni.fi.pv239.reminder.service.LocationService;
 
 public class ReminderNewActivity extends AppCompatActivity implements CompoundButton.OnCheckedChangeListener, View.OnClickListener, GoogleApiClient.OnConnectionFailedListener {
 
-    public static String REMINDER_ID = "reminder_id";
+    public static final String REMINDER_ID = "reminder_id";
 
-    private int PLACE_PICKER_REQUEST = 1;
+    public static final int PERMISSION_LOCATION = 0;
+
+    private static final int PLACE_PICKER_REQUEST = 1;
 
     private ActivityReminderNewBinding mBinding;
     private Reminder mReminder;
@@ -105,8 +110,8 @@ public class ReminderNewActivity extends AppCompatActivity implements CompoundBu
     private void setProperWifi() {
         for (int i = 0; i < mBinding.spinnerSelectWifi.getAdapter().getCount(); i++) {
             String item = (String) mBinding.spinnerSelectWifi.getAdapter().getItem(i);
-            if(item.equals(mReminder.identifier)) {
-                mBinding.spinnerSelectWifi.setSelection(i       );
+            if (item.equals(mReminder.identifier)) {
+                mBinding.spinnerSelectWifi.setSelection(i);
             }
         }
     }
@@ -154,12 +159,19 @@ public class ReminderNewActivity extends AppCompatActivity implements CompoundBu
     }
 
     private void selectPlace() {
-        PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
 
-        try {
-            startActivityForResult(builder.build(this), PLACE_PICKER_REQUEST);
-        } catch (GooglePlayServicesRepairableException | GooglePlayServicesNotAvailableException e) {
-            e.printStackTrace();
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
+                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_LOCATION);
+        } else {
+
+            PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
+
+            try {
+                startActivityForResult(builder.build(this), PLACE_PICKER_REQUEST);
+            } catch (GooglePlayServicesRepairableException | GooglePlayServicesNotAvailableException e) {
+                e.printStackTrace();
+            }
         }
     }
 
@@ -174,5 +186,22 @@ public class ReminderNewActivity extends AppCompatActivity implements CompoundBu
     @Override
     public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
 
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode,
+                                           String permissions[], int[] grantResults) {
+        switch (requestCode) {
+            case PERMISSION_LOCATION: {
+                // If request is cancelled, the result arrays are empty.
+                if (grantResults.length > 0
+                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                    Intent intent = new Intent(this, LocationService.class);
+                    startService(intent);
+                    selectPlace();
+                }
+                break;
+            }
+        }
     }
 }
