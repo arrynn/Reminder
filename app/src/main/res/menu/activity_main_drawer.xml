@@ -7,10 +7,6 @@
             android:icon="@drawable/ic_menu_camera"
             android:title="@string/drawer_item_reminders" />
         <item
-            android:id="@+id/nav_labels"
-            android:icon="@drawable/ic_menu_gallery"
-            android:title="@string/drawer_item_labels" />
-        <item
             android:id="@+id/nav_about"
             android:icon="@drawable/ic_menu_share"
             android:title="@string/drawer_item_about" />

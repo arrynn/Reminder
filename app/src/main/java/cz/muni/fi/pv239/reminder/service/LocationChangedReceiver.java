@@ -7,6 +7,7 @@ import android.location.Location;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import java.util.ArrayList;
 import java.util.List;
 
 import cz.muni.fi.pv239.reminder.ReminderType;
@@ -31,14 +32,16 @@ public class LocationChangedReceiver extends BroadcastReceiver {
     }
 
     private void showNotifications(Context context, LatLng latLng) {
-        List<Reminder> reminders = Reminder.getReminderByType(ReminderType.TYPE_LOCATION);
+        List<Reminder> reminders = new ArrayList<>();
+                /*
+                Reminder.getReminderByType(ReminderType.TYPE_LOCATION);*/
 
         for (Reminder reminder : reminders) {
             float[] result = new float[1];
-            Location.distanceBetween(latLng.latitude, latLng.longitude, reminder.location.latitude, reminder.location.longitude, result);
+           /* Location.distanceBetween(latLng.latitude, latLng.longitude, reminder.location.latitude, reminder.location.longitude, result);
             if (result[0] < MIN_DISTANCE) {
                 NotificationUtils.showNotification(context, reminder);
-            }
+            }*/
 
         }
     }

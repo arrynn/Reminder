@@ -7,7 +7,6 @@ import android.content.pm.PackageManager;
 import android.support.v4.app.ActivityCompat;
 
 import com.activeandroid.ActiveAndroid;
-import com.google.android.gms.location.LocationServices;
 
 import cz.muni.fi.pv239.reminder.service.LocationService;
 

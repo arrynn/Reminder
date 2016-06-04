@@ -1,11 +1,14 @@
 package cz.muni.fi.pv239.reminder.model;
 
+import android.support.annotation.NonNull;
+
 import com.activeandroid.Model;
 import com.activeandroid.annotation.Column;
 import com.activeandroid.annotation.Table;
 import com.activeandroid.query.Select;
 import com.google.android.gms.maps.model.LatLng;
 
+import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
 
@@ -15,23 +18,24 @@ import java.util.List;
 @Table(name = "Reminder")
 public class Reminder extends Model {
 
+    /**
+     * Title of reminder
+     */
     @Column(name = "title")
     public String title;
 
+    /**
+     * Description or note for this reminder
+     */
     @Column(name = "description")
     public String description;
 
-    @Column(name = "type")
-    public int type;
 
+    public List<Condition> conditions = new ArrayList<>();
+
+    @Deprecated
     @Column(name = "identifier")
     public String identifier;
-
-    @Column(name = "location")
-    public LatLng location;
-
-    @Column(name = "id_label", index = true)
-    public Label label;
 
     @Column(name = "displayed")
     public boolean displayed;
@@ -53,7 +57,7 @@ public class Reminder extends Model {
                 .executeSingle();
     }
 
-    public static List<Reminder> getReminderByTypeAndIdentifier(int type, String name) {
+/*    public static List<Reminder> getReminderByTypeAndIdentifier(int type, String name) {
         return new Select().from(Reminder.class)
                 .where("displayed =?", false)
                 .where("type =?", type)
@@ -66,6 +70,6 @@ public class Reminder extends Model {
                 .where("displayed =?", false)
                 .where("type =?", type)
                 .execute();
-    }
+    }*/
 
 }
