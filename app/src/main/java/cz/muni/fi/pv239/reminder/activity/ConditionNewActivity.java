@@ -96,8 +96,8 @@ public class ConditionNewActivity extends AppCompatActivity implements  View.OnC
                     case WIFI_REACHED:
                     case WIFI_LOST:
                         timePicker.setVisibility(View.GONE);
-                        wifiSpinner.setVisibility(View.GONE);
-                        locationView.setVisibility(View.INVISIBLE);
+                        wifiSpinner.setVisibility(View.VISIBLE);
+                        locationView.setVisibility(View.GONE);
                         break;
                     case LOCATION_REACHED:
                     case LOCATION_LEFT:
