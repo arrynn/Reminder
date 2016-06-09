@@ -1,11 +1,8 @@
 package cz.muni.fi.pv239.reminder.fragment;
 
-import android.content.Context;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
-import android.net.Uri;
 import android.os.Bundle;
-import android.support.design.widget.FloatingActionButton;
 import android.support.v4.app.Fragment;
 import android.support.v7.widget.LinearLayoutManager;
 import android.support.v7.widget.RecyclerView;
@@ -66,9 +63,7 @@ public class RemindersFragment extends Fragment implements View.OnClickListener,
         RecyclerView.LayoutManager mLayoutManager = new LinearLayoutManager(getActivity());
         mBinding.recyclerView.setLayoutManager(mLayoutManager);
 
-//        createDummyReminders();
-
-        // specify an adapter (see also next example)
+        // specify an adapter
         mReminders = Reminder.getAllReminders();
         mAdapter = new ReminderAdapter(mReminders, this);
         mBinding.recyclerView.setAdapter(mAdapter);

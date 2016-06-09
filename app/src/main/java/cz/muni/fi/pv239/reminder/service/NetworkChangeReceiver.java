@@ -1,24 +1,21 @@
 package cz.muni.fi.pv239.reminder.service;
 
-import android.app.Notification;
-import android.app.NotificationManager;
-import android.app.PendingIntent;
 import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
-import android.media.RingtoneManager;
 import android.net.ConnectivityManager;
 import android.net.NetworkInfo;
 import android.net.wifi.WifiInfo;
 import android.net.wifi.WifiManager;
 
-import java.util.Date;
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-import cz.muni.fi.pv239.reminder.R;
 import cz.muni.fi.pv239.reminder.ReminderType;
-import cz.muni.fi.pv239.reminder.activity.ReminderDetailActivity;
-import cz.muni.fi.pv239.reminder.activity.ReminderNewActivity;
+import cz.muni.fi.pv239.reminder.model.Condition;
+import cz.muni.fi.pv239.reminder.model.ConditionType;
 import cz.muni.fi.pv239.reminder.model.Reminder;
 import cz.muni.fi.pv239.reminder.utils.NotificationUtils;
 
@@ -35,12 +32,66 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
             WifiManager wifiMgr = (WifiManager) context.getSystemService(Context.WIFI_SERVICE);
             WifiInfo wifiInfo = wifiMgr.getConnectionInfo();
             String name = wifiInfo.getSSID();
-            showNotifications(context, name);
+
+            List<Condition> conditions = Condition.getUnfulfilledWifiBasedConditions();
+            Set<Long> reminderIdsToCheck = new HashSet<>();
+
+            for (Condition c : conditions) {
+
+                boolean wifiEquals = c.getWifiSsid().equals(name);
+
+                switch (c.getType()) {
+
+                    case TIME:
+                    case LOCATION_REACHED:
+                    case LOCATION_LEFT:
+                        break;
+                    case WIFI_REACHED:
+                        if (wifiEquals) {
+                            if (c.isPreconditionFulfilled()) {
+                                c.setFulfilled(true);
+                                c.save();
+                                reminderIdsToCheck.add(c.getReminderId());
+                            }
+                        } else if (!c.isPreconditionFulfilled()) {
+                            c.setPreconditionFulfilled(true);
+                            c.save();
+                        }
+                        break;
+                    case WIFI_LOST:
+                        if (wifiEquals) {
+                            if (!c.isPreconditionFulfilled()) {
+                                c.setFulfilled(true);
+                                c.save();
+                            }
+                        } else if (c.isPreconditionFulfilled()) {
+                            c.setFulfilled(true);
+                            c.save();
+                            reminderIdsToCheck.add(c.getReminderId());
+                        }
+                        break;
+                }
+            }
+
+            // FIXME - optimize this via sql query
+            for (Long reminderId : reminderIdsToCheck) {
+                Reminder reminder = Reminder.getReminderById(reminderId);
+                boolean showReminder = true;
+                for (Condition c : reminder.conditions) {
+                    showReminder &= c.isFulfilled();
+                }
+                if (showReminder) {
+                    NotificationUtils.showNotification(context, reminder);
+                }
+            }
+
         }
+
     }
 
     private void showNotifications(Context context, String name) {
-        List<Reminder> reminders = Reminder.getReminderByTypeAndIdentifier(ReminderType.TYPE_WIFI, name);
+        List<Reminder> reminders = new ArrayList<>();
+             /*   Reminder.getReminderByTypeAndIdentifier(ReminderType.TYPE_WIFI, name);*/
         for (Reminder reminder : reminders) {
             NotificationUtils.showNotification(context, reminder);
         }

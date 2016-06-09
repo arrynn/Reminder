@@ -7,9 +7,13 @@ import android.location.Location;
 
 import com.google.android.gms.maps.model.LatLng;
 
+import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import cz.muni.fi.pv239.reminder.ReminderType;
+import cz.muni.fi.pv239.reminder.model.Condition;
 import cz.muni.fi.pv239.reminder.model.Reminder;
 import cz.muni.fi.pv239.reminder.utils.NotificationUtils;
 
@@ -31,15 +35,69 @@ public class LocationChangedReceiver extends BroadcastReceiver {
     }
 
     private void showNotifications(Context context, LatLng latLng) {
-        List<Reminder> reminders = Reminder.getReminderByType(ReminderType.TYPE_LOCATION);
 
-        for (Reminder reminder : reminders) {
-            float[] result = new float[1];
-            Location.distanceBetween(latLng.latitude, latLng.longitude, reminder.location.latitude, reminder.location.longitude, result);
-            if (result[0] < MIN_DISTANCE) {
-                NotificationUtils.showNotification(context, reminder);
+        List<Condition> conditions = Condition.getUnfulfilledLocationBasedConditions();
+        Set<Long> reminderIdsToCheck = new HashSet<>();
+
+        for (Condition c : conditions) {
+
+            if (c.getLocation() == null) {
+                continue;
             }
 
+            boolean isInLocation = isInLocation(c, latLng);
+
+            switch (c.getType()) {
+
+                case TIME:
+                    break;
+                case WIFI_REACHED:
+                case LOCATION_REACHED:
+                    if (isInLocation) {
+                        if (c.isPreconditionFulfilled()) {
+                            c.setFulfilled(true);
+                            c.save();
+                            reminderIdsToCheck.add(c.getReminderId());
+                        }
+                    } else if (!c.isPreconditionFulfilled()) {
+                        c.setPreconditionFulfilled(true);
+                        c.save();
+                    }
+                    break;
+                case WIFI_LOST:
+                case LOCATION_LEFT:
+                    if (isInLocation) {
+                        if (!c.isPreconditionFulfilled()) {
+                            c.setFulfilled(true);
+                            c.save();
+                        }
+                    } else if (c.isPreconditionFulfilled()) {
+                        c.setFulfilled(true);
+                        c.save();
+                        reminderIdsToCheck.add(c.getReminderId());
+                    }
+                    break;
+            }
         }
+
+        // FIXME - optimize this via sql query
+        for (Long reminderId : reminderIdsToCheck) {
+            Reminder reminder = Reminder.getReminderById(reminderId);
+            boolean showReminder = true;
+            for (Condition c : reminder.conditions) {
+                showReminder &= c.isFulfilled();
+            }
+            if (showReminder) {
+                NotificationUtils.showNotification(context, reminder);
+            }
+        }
+
     }
+
+    private boolean isInLocation(Condition c, LatLng latLng) {
+        float[] result = new float[1];
+        Location.distanceBetween(latLng.latitude, latLng.longitude, c.getLocation().latitude, c.getLocation().longitude, result);
+        return result[0] < MIN_DISTANCE;
+    }
+
 }

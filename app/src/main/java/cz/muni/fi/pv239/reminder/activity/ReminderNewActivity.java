@@ -1,55 +1,46 @@
 package cz.muni.fi.pv239.reminder.activity;
 
-import android.Manifest;
-import android.content.Context;
 import android.content.Intent;
-import android.content.pm.PackageManager;
 import android.databinding.DataBindingUtil;
-import android.net.wifi.WifiConfiguration;
-import android.net.wifi.WifiManager;
+import android.os.Bundle;
 import android.support.annotation.NonNull;
 import android.support.design.widget.TextInputLayout;
-import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
-import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuInflater;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.ArrayAdapter;
-import android.widget.CompoundButton;
-
-import com.google.android.gms.common.ConnectionResult;
-import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
-import com.google.android.gms.common.GooglePlayServicesRepairableException;
-import com.google.android.gms.common.api.GoogleApiClient;
-import com.google.android.gms.location.places.Place;
-import com.google.android.gms.location.places.Places;
-import com.google.android.gms.location.places.ui.PlacePicker;
+import android.widget.ImageButton;
+import android.widget.ListView;
 
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
+import java.util.Set;
 
 import cz.muni.fi.pv239.reminder.R;
-import cz.muni.fi.pv239.reminder.ReminderType;
+import cz.muni.fi.pv239.reminder.adapter.ConditionAdapter;
 import cz.muni.fi.pv239.reminder.databinding.ActivityReminderNewBinding;
+import cz.muni.fi.pv239.reminder.model.Condition;
+import cz.muni.fi.pv239.reminder.model.ConditionType;
 import cz.muni.fi.pv239.reminder.model.Reminder;
-import cz.muni.fi.pv239.reminder.service.LocationService;
 
-public class ReminderNewActivity extends AppCompatActivity implements CompoundButton.OnCheckedChangeListener, View.OnClickListener, GoogleApiClient.OnConnectionFailedListener {
+public class ReminderNewActivity extends AppCompatActivity implements ConditionAdapter.OnConditionClickedListener {
 
     public static final String REMINDER_ID = "reminder_id";
-
-    public static final int PERMISSION_LOCATION = 0;
-
-    private static final int PLACE_PICKER_REQUEST = 1;
+    public static final String ALLOWED_CONDITION_TYPES = "allowed_condition_types";
+    public static final String CONDITION_EXTRA_NAME = "condition_extra";
+    private static final int REQUEST_CODE_NEW_CONDITION = 1;
 
     private ActivityReminderNewBinding mBinding;
     private Reminder mReminder;
 
-    private GoogleApiClient mGoogleApiClient;
+    private ArrayAdapter<Condition> conditionsListAdapter;
 
-    private Place mSelectedPlace;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,33 +53,26 @@ public class ReminderNewActivity extends AppCompatActivity implements CompoundBu
         }
         mBinding.setReminder(mReminder);
 
-        mBinding.radioTypeLocation.setOnCheckedChangeListener(this);
-        mBinding.radioTypeWifi.setOnCheckedChangeListener(this);
-        mBinding.buttonSelectLocation.setOnClickListener(this);
+        initConditions(reminderId);
+    }
 
-        WifiManager wifiManager = (WifiManager) getSystemService(Context.WIFI_SERVICE);
-        List<String> wifiList = new ArrayList<>();
+    private void initConditions(Long reminderId) {
 
-        if (wifiManager != null && wifiManager.getConfiguredNetworks() != null) {
-            for (WifiConfiguration wifiConfiguration : wifiManager.getConfiguredNetworks()) {
-                wifiList.add(wifiConfiguration.SSID);
-            }
-
-            ArrayAdapter<String> adapter = new ArrayAdapter<>(this, android.R.layout.simple_list_item_1, wifiList);
-            mBinding.spinnerSelectWifi.setAdapter(adapter);
-
-            if (mReminder.type == ReminderType.TYPE_WIFI && mReminder.identifier != null) {
-                setProperWifi();
-            }
+        List<Condition> mConditions = new ArrayList<>();
+        if (reminderId != null) {
+            mConditions = Condition.getConditionsByReminderId(reminderId);
         }
 
-        mGoogleApiClient = new GoogleApiClient
-                .Builder(this)
-                .addApi(Places.GEO_DATA_API)
-                .addApi(Places.PLACE_DETECTION_API)
-                .enableAutoManage(this, this)
-                .build();
+        ListView listview = (ListView) findViewById(R.id.conditions_list_view);
+
+        //make an arrayadapter for listview
+        conditionsListAdapter = new ArrayAdapter<Condition>(this, R.layout.list_conditions, mConditions);
+
+        //set adapter to listview
+        listview.setAdapter(conditionsListAdapter);
+
     }
+
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu) {
@@ -108,15 +92,6 @@ public class ReminderNewActivity extends AppCompatActivity implements CompoundBu
         }
     }
 
-    private void setProperWifi() {
-        for (int i = 0; i < mBinding.spinnerSelectWifi.getAdapter().getCount(); i++) {
-            String item = (String) mBinding.spinnerSelectWifi.getAdapter().getItem(i);
-            if (item.equals(mReminder.identifier)) {
-                mBinding.spinnerSelectWifi.setSelection(i);
-            }
-        }
-    }
-
     private void saveReminder() {
         if (mBinding.reminderTitle.getText().toString().isEmpty()) {
             ((TextInputLayout) mBinding.reminderTitle.getParent()).setErrorEnabled(true);
@@ -125,92 +100,74 @@ public class ReminderNewActivity extends AppCompatActivity implements CompoundBu
         }
         mReminder.title = mBinding.reminderTitle.getText().toString();
         mReminder.description = mBinding.reminderDescription.getText().toString();
-        if (mBinding.radioTypeLocation.isChecked()) {
-            mReminder.type = ReminderType.TYPE_LOCATION;
-            if (mSelectedPlace != null) {
-                mReminder.location = mSelectedPlace.getLatLng();
-                mReminder.identifier = mSelectedPlace.getName() != null ? mSelectedPlace.getName().toString() : mSelectedPlace.getAddress().toString();
-            }
-        } else if (mBinding.radioTypeWifi.isChecked()) {
-            mReminder.type = ReminderType.TYPE_WIFI;
-            mReminder.identifier = mBinding.spinnerSelectWifi.getSelectedItem().toString();
-        }
+
         mReminder.save();
+
+        for (Condition c : mReminder.conditions) {
+            c.setReminderId(mReminder.getId());
+            c.save();
+        }
+
         finish();
     }
 
-    @Override
-    public void onCheckedChanged(CompoundButton buttonView, boolean isChecked) {
-        switch (buttonView.getId()) {
-            case R.id.radio_type_location:
-                if (isChecked) {
-                    mBinding.viewLocation.setVisibility(View.VISIBLE);
-                    mBinding.spinnerSelectWifi.setVisibility(View.GONE);
-                }
-                break;
-            case R.id.radio_type_wifi:
-                if (isChecked && mReminder != null) {
-                    mBinding.viewLocation.setVisibility(View.GONE);
-                    mBinding.spinnerSelectWifi.setVisibility(View.VISIBLE);
-                }
-                break;
-        }
+
+    // Called when the user clicks the add button
+    public void addNewCondition(View view) {
+        Intent intent = new Intent(this, ConditionNewActivity.class);
+
+        List<ConditionType> allowedConditionTypes = getAllowedConditionTypes();
+
+        intent.putExtra(ALLOWED_CONDITION_TYPES, allowedConditionTypes.toArray(new ConditionType[]{}));
+        startActivityForResult(intent, REQUEST_CODE_NEW_CONDITION);
     }
 
-    @Override
-    public void onClick(View v) {
-        switch (v.getId()) {
-            case R.id.button_select_location:
-                selectPlace();
-                break;
-        }
-    }
+    @NonNull
+    private List<ConditionType> getAllowedConditionTypes() {
+        List<ConditionType> allowedConditionTypes = new ArrayList<>();
+        allowedConditionTypes.addAll(Arrays.asList(ConditionType.values()));
 
-    private void selectPlace() {
-
-        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
-                && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
-            ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_LOCATION);
-        } else {
-
-            PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
-
-            try {
-                startActivityForResult(builder.build(this), PLACE_PICKER_REQUEST);
-            } catch (GooglePlayServicesRepairableException | GooglePlayServicesNotAvailableException e) {
-                e.printStackTrace();
+        for (Condition c : mReminder.conditions) {
+            allowedConditionTypes.remove(c.getType());
+            if (ConditionType.WIFI_REACHED.equals(c.getType())) {
+                allowedConditionTypes.remove(ConditionType.WIFI_LOST);
+            } else if (ConditionType.WIFI_LOST.equals(c.getType())) {
+                allowedConditionTypes.remove(ConditionType.WIFI_REACHED);
+            } else if (ConditionType.LOCATION_REACHED.equals(c.getType())) {
+                allowedConditionTypes.remove(ConditionType.LOCATION_LEFT);
+            } else if (ConditionType.LOCATION_LEFT.equals(c.getType())) {
+                allowedConditionTypes.remove(ConditionType.LOCATION_REACHED);
             }
         }
+
+        return allowedConditionTypes;
     }
 
-    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-        if (requestCode == PLACE_PICKER_REQUEST) {
+    public void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        if (requestCode == REQUEST_CODE_NEW_CONDITION) {
             if (resultCode == RESULT_OK) {
-                mSelectedPlace = PlacePicker.getPlace(this, data);
-                mBinding.textViewLocation.setText(mSelectedPlace.getName() != null ? mSelectedPlace.getName().toString() : mSelectedPlace.getAddress().toString());
-            }
-        }
-    }
+                Condition condition = data.getParcelableExtra(CONDITION_EXTRA_NAME);
+                if (condition != null) {
+                    mReminder.conditions.add(condition);
+                    conditionsListAdapter.add(condition);
 
-    @Override
-    public void onConnectionFailed(@NonNull ConnectionResult connectionResult) {
+                    if (getAllowedConditionTypes().isEmpty()) {
+                        ImageButton button = (ImageButton) findViewById(R.id.add_condition_button);
+                        button.setVisibility(View.GONE);
+                    }
 
-    }
-
-    @Override
-    public void onRequestPermissionsResult(int requestCode,
-                                           String permissions[], int[] grantResults) {
-        switch (requestCode) {
-            case PERMISSION_LOCATION: {
-                // If request is cancelled, the result arrays are empty.
-                if (grantResults.length > 0
-                        && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
-                    Intent intent = new Intent(this, LocationService.class);
-                    startService(intent);
-                    selectPlace();
                 }
-                break;
             }
         }
+
+
+    }
+
+
+    @Override
+    public void onConditionClicked(Condition condition) {
+        Log.i(getClass().getName(), Objects.toString(condition));
+        //TODO
     }
 }
