@@ -38,6 +38,15 @@ public class MainActivity extends AppCompatActivity
         NavigationView navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
 
+        // TODO - remove
+        // insertTestData();
+
+
+        setFragment(RemindersFragment.newInstance());
+    }
+
+    @Deprecated
+    private void insertTestData() {
         // TODO - test data
         if (Reminder.getAllReminders().isEmpty()) {
             Reminder r = new Reminder();
@@ -80,9 +89,6 @@ public class MainActivity extends AppCompatActivity
             r1.save();
 
         }
-
-
-        setFragment(RemindersFragment.newInstance());
     }
 
     @Override

@@ -19,6 +19,12 @@ public class Condition extends Model implements Parcelable {
     @Column(name = "id_reminder")
     private Long reminderId;
 
+    @Column(name = "fullfiled")
+    private boolean fulfilled = false;
+
+    @Column(name = "precondition_fullfiled")
+    private boolean preconditionFulfilled = false;
+
     @Column(name = "type")
     private ConditionType type;
 
@@ -52,6 +58,22 @@ public class Condition extends Model implements Parcelable {
 
     public void setReminderId(Long reminderId) {
         this.reminderId = reminderId;
+    }
+
+    public boolean isFulfilled() {
+        return fulfilled;
+    }
+
+    public void setFulfilled(boolean fulfilled) {
+        this.fulfilled = fulfilled;
+    }
+
+    public boolean isPreconditionFulfilled() {
+        return preconditionFulfilled;
+    }
+
+    public void setPreconditionFulfilled(boolean preconditionFulfilled) {
+        this.preconditionFulfilled = preconditionFulfilled;
     }
 
     public ConditionType getType() {
@@ -114,6 +136,8 @@ public class Condition extends Model implements Parcelable {
     @Override
     public void writeToParcel(Parcel dest, int flags) {
         dest.writeLong(reminderId == null ? -1 : reminderId);
+        dest.writeInt(fulfilled ? 1 : 0);
+        dest.writeInt(preconditionFulfilled ? 1 : 0);
         dest.writeString(type == null ? null : type.name());
         dest.writeInt(timeHours);
         dest.writeInt(timeMinutes);
@@ -133,6 +157,8 @@ public class Condition extends Model implements Parcelable {
         if (reminderId == -1) {
             reminderId = null;
         }
+        fulfilled = in.readInt() == 1;
+        preconditionFulfilled = in.readInt() == 1;
         type = ConditionType.valueOf(in.readString());
         timeHours = in.readInt();
         timeMinutes = in.readInt();
@@ -174,5 +200,19 @@ public class Condition extends Model implements Parcelable {
         return PrettyPrintUtils.getAsFormattedText(this);
     }
 
+
+    public static List<Condition> getUnfulfilledLocationBasedConditions() {
+        return new Select().from(Condition.class)
+                .where("fullfiled IS NOT TRUE")
+                .where("type != ?", ConditionType.TIME)
+                .execute();
+    }
+
+    public static List<Condition> getUnfulfilledWifiBasedConditions() {
+        return new Select().from(Condition.class)
+                .where("fullfiled IS NOT TRUE")
+                .where("type IN (?,?)", ConditionType.WIFI_REACHED, ConditionType.WIFI_LOST)
+                .execute();
+    }
 
 }

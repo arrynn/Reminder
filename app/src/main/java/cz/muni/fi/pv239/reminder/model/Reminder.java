@@ -57,19 +57,4 @@ public class Reminder extends Model {
                 .executeSingle();
     }
 
-/*    public static List<Reminder> getReminderByTypeAndIdentifier(int type, String name) {
-        return new Select().from(Reminder.class)
-                .where("displayed =?", false)
-                .where("type =?", type)
-                .where("identifier = ?", name)
-                .execute();
-    }
-
-    public static List<Reminder> getReminderByType(int type) {
-        return new Select().from(Reminder.class)
-                .where("displayed =?", false)
-                .where("type =?", type)
-                .execute();
-    }*/
-
 }

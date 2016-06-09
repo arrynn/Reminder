@@ -19,6 +19,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Set;
 
 import cz.muni.fi.pv239.reminder.R;
@@ -101,12 +102,10 @@ public class ReminderNewActivity extends AppCompatActivity implements ConditionA
         mReminder.description = mBinding.reminderDescription.getText().toString();
 
         mReminder.save();
-        Log.i(this.getClass().getSimpleName(), "saveReminder: " + mReminder.getId());
 
         for (Condition c : mReminder.conditions) {
             c.setReminderId(mReminder.getId());
             c.save();
-            Log.i(this.getClass().getSimpleName(), "saveCondition: " + c.getId());
         }
 
         finish();
@@ -117,21 +116,30 @@ public class ReminderNewActivity extends AppCompatActivity implements ConditionA
     public void addNewCondition(View view) {
         Intent intent = new Intent(this, ConditionNewActivity.class);
 
-        Set<ConditionType> allowedConditionTypes = getAllowedConditionTypes();
+        List<ConditionType> allowedConditionTypes = getAllowedConditionTypes();
 
         intent.putExtra(ALLOWED_CONDITION_TYPES, allowedConditionTypes.toArray(new ConditionType[]{}));
         startActivityForResult(intent, REQUEST_CODE_NEW_CONDITION);
     }
 
     @NonNull
-    private Set<ConditionType> getAllowedConditionTypes() {
-        Set<ConditionType> usedConditions = new HashSet<>();
-        for (Condition c : mReminder.conditions) {
-            usedConditions.add(c.getType());
-        }
-        Set<ConditionType> allowedConditionTypes = new HashSet();
+    private List<ConditionType> getAllowedConditionTypes() {
+        List<ConditionType> allowedConditionTypes = new ArrayList<>();
         allowedConditionTypes.addAll(Arrays.asList(ConditionType.values()));
-        allowedConditionTypes.removeAll(usedConditions);
+
+        for (Condition c : mReminder.conditions) {
+            allowedConditionTypes.remove(c.getType());
+            if (ConditionType.WIFI_REACHED.equals(c.getType())) {
+                allowedConditionTypes.remove(ConditionType.WIFI_LOST);
+            } else if (ConditionType.WIFI_LOST.equals(c.getType())) {
+                allowedConditionTypes.remove(ConditionType.WIFI_REACHED);
+            } else if (ConditionType.LOCATION_REACHED.equals(c.getType())) {
+                allowedConditionTypes.remove(ConditionType.LOCATION_LEFT);
+            } else if (ConditionType.LOCATION_LEFT.equals(c.getType())) {
+                allowedConditionTypes.remove(ConditionType.LOCATION_REACHED);
+            }
+        }
+
         return allowedConditionTypes;
     }
 
@@ -159,6 +167,7 @@ public class ReminderNewActivity extends AppCompatActivity implements ConditionA
 
     @Override
     public void onConditionClicked(Condition condition) {
+        Log.i(getClass().getName(), Objects.toString(condition));
         //TODO
     }
 }

@@ -65,8 +65,6 @@ public class ConditionNewActivity extends AppCompatActivity implements  View.OnC
         initWifiSpinner();
         initLocations();
 
-        Long reminderId = getIntent().getLongExtra(ReminderNewActivity.REMINDER_ID, -1);
-
     }
 
     private void initAllowedConditionTypes() {
@@ -79,7 +77,6 @@ public class ConditionNewActivity extends AppCompatActivity implements  View.OnC
         final View timePicker = findViewById(R.id.timePicker);
         final View wifiSpinner = findViewById(R.id.spinner_select_wifi);
         final View locationView = findViewById(R.id.view_location);
-
 
         conditionTypeSpinner.setOnItemSelectedListener(new AdapterView.OnItemSelectedListener() {
 
@@ -134,12 +131,14 @@ public class ConditionNewActivity extends AppCompatActivity implements  View.OnC
 
 
             // setCurrentWifi
-            String currentWifi = wifiManager.getConnectionInfo().getSSID();
+            if (wifiManager.getConnectionInfo() != null) {
+                String currentWifi = wifiManager.getConnectionInfo().getSSID();
 
-            for (int i = 0; i < mBinding.spinnerSelectWifi.getAdapter().getCount(); i++) {
-                String item = (String) mBinding.spinnerSelectWifi.getAdapter().getItem(i);
-                if (item.equals(currentWifi)) {
-                    mBinding.spinnerSelectWifi.setSelection(i);
+                for (int i = 0; i < mBinding.spinnerSelectWifi.getAdapter().getCount(); i++) {
+                    String item = (String) mBinding.spinnerSelectWifi.getAdapter().getItem(i);
+                    if (item.equals(currentWifi)) {
+                        mBinding.spinnerSelectWifi.setSelection(i);
+                    }
                 }
             }
 
@@ -186,8 +185,8 @@ public class ConditionNewActivity extends AppCompatActivity implements  View.OnC
         if (conditionType == null) {
             TextView errorText = (TextView) ((Spinner) mBinding.spinnerConditionType).getSelectedView();
             errorText.setError("empty");
-            errorText.setTextColor(Color.RED);//just to highlight that this is an error
-            errorText.setText("This field is required.");//changes the selected item text to this
+            errorText.setTextColor(Color.RED);
+            errorText.setText("This field is required.");
             return false;
         }
 
@@ -199,11 +198,16 @@ public class ConditionNewActivity extends AppCompatActivity implements  View.OnC
             case WIFI_REACHED:
             case WIFI_LOST:
                 if (mBinding.spinnerSelectWifi.getSelectedItem() == null) {
+                    // FIXME - error message
                     return false;
                 }
                 break;
             case LOCATION_REACHED:
             case LOCATION_LEFT:
+                if (mCondition == null || mCondition.getLocation() == null) {
+                    // FIXME - error message
+                    return false;
+                }
                 break;
         }
 
@@ -225,6 +229,7 @@ public class ConditionNewActivity extends AppCompatActivity implements  View.OnC
             case WIFI_REACHED:
             case WIFI_LOST:
                 c.setWifiSsid((String)mBinding.spinnerSelectWifi.getSelectedItem());
+                // FIXME - set current location
                 break;
             case LOCATION_REACHED:
             case LOCATION_LEFT:
@@ -234,9 +239,6 @@ public class ConditionNewActivity extends AppCompatActivity implements  View.OnC
 
         return c;
     }
-
-
-
 
 
     @Override
@@ -255,7 +257,7 @@ public class ConditionNewActivity extends AppCompatActivity implements  View.OnC
     }
 
 
-    private void selectPlace() {
+    public void selectPlace() {
 
         if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED
                 && ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
@@ -273,10 +275,17 @@ public class ConditionNewActivity extends AppCompatActivity implements  View.OnC
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        Log.i(getClass().getName(), "onActivityResult");
         if (requestCode == PLACE_PICKER_REQUEST) {
+            Log.i(getClass().getName(), "resultCode=" + resultCode);
             if (resultCode == RESULT_OK) {
                 mSelectedPlace = PlacePicker.getPlace(this, data);
-                mCondition.setLocationName(mSelectedPlace.getName() != null ? mSelectedPlace.getName().toString() : mSelectedPlace.getAddress().toString());
+                Log.i(getClass().getName(), "mSelectedPlace=" + mSelectedPlace);
+                if (mSelectedPlace != null) {
+                    mCondition.setLocationName(mSelectedPlace.getName() != null ? mSelectedPlace.getName().toString() : mSelectedPlace.getAddress().toString());
+                    final TextView locationTextView = (TextView) findViewById(R.id.text_view_location);
+                    locationTextView.setText(mCondition.getLocationName());
+                }
             }
         }
     }
