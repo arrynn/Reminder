@@ -188,6 +188,12 @@ public class Condition extends Model implements Parcelable {
             };
 
 
+    public static Condition getConditionById(Long id) {
+        return new Select().from(Condition.class)
+                .where("id = ?", id)
+                .executeSingle();
+    }
+
     public static List<Condition> getConditionsByReminderId(Long reminderId) {
         return new Select().from(Condition.class)
                 .where("id_reminder = ?", reminderId)
@@ -201,18 +207,32 @@ public class Condition extends Model implements Parcelable {
     }
 
 
+    public static List<Condition> getUnfulfilledTimeBasedConditions() {
+        return new Select().from(Condition.class)
+                .where("fullfiled != TRUE")
+                .where("type == ?", ConditionType.TIME)
+                .execute();
+    }
+
     public static List<Condition> getUnfulfilledLocationBasedConditions() {
         return new Select().from(Condition.class)
-                .where("fullfiled IS NOT TRUE")
+                .where("fullfiled != TRUE")
                 .where("type != ?", ConditionType.TIME)
                 .execute();
     }
 
     public static List<Condition> getUnfulfilledWifiBasedConditions() {
         return new Select().from(Condition.class)
-                .where("fullfiled IS NOT TRUE")
+                .where("fullfiled != TRUE")
                 .where("type IN (?,?)", ConditionType.WIFI_REACHED, ConditionType.WIFI_LOST)
                 .execute();
     }
 
+    public static List<Condition> getConditionsByFulfilledAndType(boolean preconditionFulfilled, boolean fulfilled, ConditionType type) {
+        return new Select().from(Condition.class)
+                .where("precondition_fullfiled = ?", preconditionFulfilled)
+                .where("fullfiled = ?", fulfilled)
+                .where("type = ?", type)
+                .execute();
+    }
 }

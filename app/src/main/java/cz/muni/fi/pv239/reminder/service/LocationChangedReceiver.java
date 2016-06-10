@@ -4,6 +4,7 @@ import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
 import android.location.Location;
+import android.util.Log;
 
 import com.google.android.gms.maps.model.LatLng;
 
@@ -97,6 +98,7 @@ public class LocationChangedReceiver extends BroadcastReceiver {
     private boolean isInLocation(Condition c, LatLng latLng) {
         float[] result = new float[1];
         Location.distanceBetween(latLng.latitude, latLng.longitude, c.getLocation().latitude, c.getLocation().longitude, result);
+        Log.i(getClass().getName(), "distance=" + result[0]);
         return result[0] < MIN_DISTANCE;
     }
 

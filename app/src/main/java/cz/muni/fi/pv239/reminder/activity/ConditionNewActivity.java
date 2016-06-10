@@ -1,4 +1,3 @@
-
 package cz.muni.fi.pv239.reminder.activity;
 
 import android.Manifest;
@@ -11,7 +10,7 @@ import android.net.wifi.WifiConfiguration;
 import android.net.wifi.WifiManager;
 import android.os.Bundle;
 import android.support.annotation.NonNull;
-import android.support.design.widget.TextInputLayout;
+import android.support.annotation.Nullable;
 import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
@@ -21,7 +20,6 @@ import android.view.MenuItem;
 import android.view.View;
 import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
-import android.widget.CompoundButton;
 import android.widget.Spinner;
 import android.widget.TextView;
 
@@ -29,11 +27,18 @@ import com.google.android.gms.common.ConnectionResult;
 import com.google.android.gms.common.GooglePlayServicesNotAvailableException;
 import com.google.android.gms.common.GooglePlayServicesRepairableException;
 import com.google.android.gms.common.api.GoogleApiClient;
+import com.google.android.gms.common.api.PendingResult;
+import com.google.android.gms.common.api.ResultCallback;
+import com.google.android.gms.common.api.Status;
 import com.google.android.gms.location.places.Place;
+import com.google.android.gms.location.places.PlaceDetectionApi;
+import com.google.android.gms.location.places.PlaceFilter;
+import com.google.android.gms.location.places.PlaceLikelihood;
+import com.google.android.gms.location.places.PlaceLikelihoodBuffer;
+import com.google.android.gms.location.places.PlaceReport;
 import com.google.android.gms.location.places.Places;
 import com.google.android.gms.location.places.ui.PlacePicker;
 
-import java.sql.Timestamp;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -42,15 +47,13 @@ import cz.muni.fi.pv239.reminder.databinding.ActivityConditionNewBinding;
 import cz.muni.fi.pv239.reminder.model.Condition;
 import cz.muni.fi.pv239.reminder.model.ConditionType;
 import cz.muni.fi.pv239.reminder.service.LocationService;
-import xdroid.enumformat.EnumFormat;
 
-public class ConditionNewActivity extends AppCompatActivity implements  View.OnClickListener, GoogleApiClient.OnConnectionFailedListener {
+public class ConditionNewActivity extends AppCompatActivity implements View.OnClickListener, GoogleApiClient.OnConnectionFailedListener {
 
     public static final int PERMISSION_LOCATION = 0;
     private static final int PLACE_PICKER_REQUEST = 1;
 
     private ActivityConditionNewBinding mBinding;
-    private Condition mCondition;
 
     private GoogleApiClient mGoogleApiClient;
     private Place mSelectedPlace;
@@ -204,7 +207,7 @@ public class ConditionNewActivity extends AppCompatActivity implements  View.OnC
                 break;
             case LOCATION_REACHED:
             case LOCATION_LEFT:
-                if (mCondition == null || mCondition.getLocation() == null) {
+                if (mSelectedPlace == null) {
                     // FIXME - error message
                     return false;
                 }
@@ -215,7 +218,7 @@ public class ConditionNewActivity extends AppCompatActivity implements  View.OnC
     }
 
     private Condition parseConditionFromFields() {
-        Condition c = new Condition();
+       final Condition c = new Condition();
         c.setType((ConditionType) mBinding.spinnerConditionType.getSelectedItem());
 
         switch (c.getType()) {
@@ -225,15 +228,39 @@ public class ConditionNewActivity extends AppCompatActivity implements  View.OnC
                 c.setTimeMinutes(mBinding.timePicker.getCurrentMinute());
                 c.setLocation(null);
                 c.setLocationName(null);
+                c.setPreconditionFulfilled(true);
                 break;
             case WIFI_REACHED:
             case WIFI_LOST:
-                c.setWifiSsid((String)mBinding.spinnerSelectWifi.getSelectedItem());
+                c.setWifiSsid((String) mBinding.spinnerSelectWifi.getSelectedItem());
+
                 // FIXME - set current location
+                /*if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+                    ActivityCompat.requestPermissions(this, new String[]{Manifest.permission.ACCESS_FINE_LOCATION, Manifest.permission.ACCESS_COARSE_LOCATION}, PERMISSION_LOCATION);
+                } else {
+
+                    PendingResult<PlaceLikelihoodBuffer> currentPlace = Places.PlaceDetectionApi.getCurrentPlace(mGoogleApiClient, null);
+
+                    currentPlace.setResultCallback(new ResultCallback<PlaceLikelihoodBuffer>() {
+                        @Override
+                        public void onResult(PlaceLikelihoodBuffer likelyPlaces) {
+                            for (PlaceLikelihood placeLikelihood : likelyPlaces) {
+                                c.setLocation(placeLikelihood.getPlace().getLatLng());
+                                c.setLocationName(getPlaceName(placeLikelihood.getPlace()));
+                                break;
+                            }
+                            likelyPlaces.release();
+                        }
+                    });
+
+                }*/
+
                 break;
             case LOCATION_REACHED:
             case LOCATION_LEFT:
                 // this is being set in onActivityResult
+                c.setLocation(mSelectedPlace.getLatLng());
+                c.setLocationName(getPlaceName(mSelectedPlace));
                 break;
         }
 
@@ -243,6 +270,7 @@ public class ConditionNewActivity extends AppCompatActivity implements  View.OnC
 
     @Override
     public void onClick(View v) {
+
         switch (v.getId()) {
             case R.id.button_select_location:
                 selectPlace();
@@ -275,6 +303,7 @@ public class ConditionNewActivity extends AppCompatActivity implements  View.OnC
     }
 
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
         Log.i(getClass().getName(), "onActivityResult");
         if (requestCode == PLACE_PICKER_REQUEST) {
             Log.i(getClass().getName(), "resultCode=" + resultCode);
@@ -282,12 +311,19 @@ public class ConditionNewActivity extends AppCompatActivity implements  View.OnC
                 mSelectedPlace = PlacePicker.getPlace(this, data);
                 Log.i(getClass().getName(), "mSelectedPlace=" + mSelectedPlace);
                 if (mSelectedPlace != null) {
-                    mCondition.setLocationName(mSelectedPlace.getName() != null ? mSelectedPlace.getName().toString() : mSelectedPlace.getAddress().toString());
                     final TextView locationTextView = (TextView) findViewById(R.id.text_view_location);
-                    locationTextView.setText(mCondition.getLocationName());
+                    locationTextView.setText(getPlaceName(mSelectedPlace));
                 }
             }
         }
+    }
+
+    private String getPlaceName(Place place) {
+        if (place == null) {
+            return null;
+        }
+        Object name = place.getName() != null ? place.getName() : place.getAddress();
+        return java.util.Objects.toString(name, "");
     }
 
     @Override

@@ -1,5 +1,8 @@
 package cz.muni.fi.pv239.reminder.activity;
 
+import android.app.AlarmManager;
+import android.app.PendingIntent;
+import android.content.Context;
 import android.content.Intent;
 import android.databinding.DataBindingUtil;
 import android.os.Bundle;
@@ -17,6 +20,8 @@ import android.widget.ListView;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Calendar;
+import java.util.GregorianCalendar;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Objects;
@@ -28,10 +33,13 @@ import cz.muni.fi.pv239.reminder.databinding.ActivityReminderNewBinding;
 import cz.muni.fi.pv239.reminder.model.Condition;
 import cz.muni.fi.pv239.reminder.model.ConditionType;
 import cz.muni.fi.pv239.reminder.model.Reminder;
+import cz.muni.fi.pv239.reminder.service.AlarmReciever;
+import cz.muni.fi.pv239.reminder.utils.AlarmUtils;
 
 public class ReminderNewActivity extends AppCompatActivity implements ConditionAdapter.OnConditionClickedListener {
 
     public static final String REMINDER_ID = "reminder_id";
+    public static final String CONDITION_ID = "condition_id";
     public static final String ALLOWED_CONDITION_TYPES = "allowed_condition_types";
     public static final String CONDITION_EXTRA_NAME = "condition_extra";
     private static final int REQUEST_CODE_NEW_CONDITION = 1;
@@ -106,9 +114,27 @@ public class ReminderNewActivity extends AppCompatActivity implements ConditionA
         for (Condition c : mReminder.conditions) {
             c.setReminderId(mReminder.getId());
             c.save();
+
+            scheduleAlarmForTimeCondition(c);
         }
 
         finish();
+    }
+
+    private void scheduleAlarmForTimeCondition(Condition condition) {
+        if (condition != null & ConditionType.TIME.equals(condition.getType())) {
+            long time = AlarmUtils.getTimeToScheduleAlarm(condition);
+            if (time <= 0) {
+                return;
+            }
+            Intent intentAlarm = new Intent(this, AlarmReciever.class);
+            intentAlarm.putExtra(CONDITION_ID, condition.getId());
+            AlarmManager alarmManager = (AlarmManager) getSystemService(Context.ALARM_SERVICE);
+            alarmManager.set(AlarmManager.RTC_WAKEUP, time, PendingIntent.getBroadcast(this, 1, intentAlarm, PendingIntent.FLAG_UPDATE_CURRENT));
+            Log.i(getClass().getName(), "scheduledAlarm. conditionId=" + condition.getId());
+            Log.i(getClass().getName(), "scheduledAlarm. in time (ms)" + (time - new GregorianCalendar().getTimeInMillis()));
+
+        }
     }
 
 

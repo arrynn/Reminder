@@ -13,7 +13,6 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import cz.muni.fi.pv239.reminder.ReminderType;
 import cz.muni.fi.pv239.reminder.model.Condition;
 import cz.muni.fi.pv239.reminder.model.ConditionType;
 import cz.muni.fi.pv239.reminder.model.Reminder;
@@ -26,6 +25,9 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
 
     @Override
     public void onReceive(Context context, Intent intent) {
+
+        Set<Long> reminderIdsToCheck = new HashSet<>();
+
         ConnectivityManager cm = (ConnectivityManager) context.getSystemService(Context.CONNECTIVITY_SERVICE);
         NetworkInfo activeNetwork = cm.getActiveNetworkInfo();
         if (activeNetwork != null && activeNetwork.getType() == ConnectivityManager.TYPE_WIFI && activeNetwork.isConnectedOrConnecting()) {
@@ -34,7 +36,7 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
             String name = wifiInfo.getSSID();
 
             List<Condition> conditions = Condition.getUnfulfilledWifiBasedConditions();
-            Set<Long> reminderIdsToCheck = new HashSet<>();
+
 
             for (Condition c : conditions) {
 
@@ -73,19 +75,43 @@ public class NetworkChangeReceiver extends BroadcastReceiver {
                 }
             }
 
-            // FIXME - optimize this via sql query
-            for (Long reminderId : reminderIdsToCheck) {
-                Reminder reminder = Reminder.getReminderById(reminderId);
-                boolean showReminder = true;
-                for (Condition c : reminder.conditions) {
-                    showReminder &= c.isFulfilled();
+
+        } else if (activeNetwork == null) {
+
+            {
+                // wifi-reached conditions - all have prerequisite fullfiled
+                List<Condition> conditions = Condition.getConditionsByFulfilledAndType(false, false, ConditionType.WIFI_REACHED);
+                for (Condition c : conditions) {
+                    c.setPreconditionFulfilled(true);
+                    c.save();
                 }
-                if (showReminder) {
-                    NotificationUtils.showNotification(context, reminder);
+            }
+
+            {
+                // wifi-lost conditions - if precondition fulfilled, the condition will become fulfilled
+                List<Condition> conditions = Condition.getConditionsByFulfilledAndType(true, false, ConditionType.WIFI_LOST);
+                for (Condition c : conditions) {
+                    c.setFulfilled(true);
+                    c.save();
+                    reminderIdsToCheck.add(c.getReminderId());
                 }
             }
 
         }
+
+
+        // FIXME - optimize this via sql query
+        for (Long reminderId : reminderIdsToCheck) {
+            Reminder reminder = Reminder.getReminderById(reminderId);
+            boolean showReminder = true;
+            for (Condition c : reminder.conditions) {
+                showReminder &= c.isFulfilled();
+            }
+            if (showReminder) {
+                NotificationUtils.showNotification(context, reminder);
+            }
+        }
+
 
     }
 
